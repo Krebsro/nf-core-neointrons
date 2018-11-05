@@ -32,12 +32,17 @@ def helpMessage() {
 
     References                      If not specified in the configuration file or you wish to overwrite any of the references.
       --fasta                       Path to Fasta reference
+      --star_index                  Path to star index
+      --gtf                         Path to GTF file
+      --gff3                        Path to GFF file
+      
 
     Other options:
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
-
+      --genomdir                    The direction where the genome should be made
+      
     AWSBatch options:
       --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
       --awsregion                   The AWS Region for your AWS Batch job to run on
@@ -266,7 +271,13 @@ process output_documentation {
     """
 }
 
-
+/*
+ * Creating index
+ */
+ 
+ /*
+  *
+      
 
 /*
  * Completion e-mail notification
