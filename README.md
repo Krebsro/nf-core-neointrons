@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # nf-core/neointrons
 **This pipeline analyses rna data, developed for OvCa and HCC data**
 
@@ -23,3 +24,7 @@ The nf-core/neointrons pipeline comes with documentation about the pipeline, fou
 3. [Running the pipeline](docs/usage.md)
 4. [Output and how to interpret the results](docs/output.md)
 5. [Troubleshooting](docs/troubleshooting.md)
+=======
+# nf-core-neointrons
+This pipeline analyses rna data, deeloped for OvCa and HCC samples
+>>>>>>> f1b73feef4f24607374c98f4c1efc1f1bef016af
