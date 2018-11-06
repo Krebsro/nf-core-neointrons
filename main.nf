@@ -19,7 +19,7 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/neointrons --reads '*_R{1,2}.fastq.gz' -profile standard,docker
+    nextflow run nf-core/neointrons --reads '*_R{1,2}.fastq.gz' -profile standard,singularity
 
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
@@ -42,6 +42,13 @@ def helpMessage() {
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
       --genomdir                    The direction where the genome should be made
+      --annotation                  Path to annotation
+      --v                           Path to vcf
+      --verbose                     increase output verbosity
+      --createindex                 creates star index req. --star_index --fasta --annotation
+      --runall                      run complete
+      --clean                       clean only
+      --convert                     covert only
       
     AWSBatch options:
       --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
@@ -65,6 +72,10 @@ params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : 
 params.multiqc_config = "$baseDir/conf/multiqc_config.yaml"
 params.email = false
 params.plaintext_email = false
+params.verbose = true
+params.createindex = true
+params.clean = true
+params.convert = true
 
 multiqc_config = file(params.multiqc_config)
 output_docs = file("$baseDir/docs/output.md")
@@ -163,6 +174,12 @@ if(workflow.profile == 'awsbatch'){
 if(params.email) summary['E-mail Address'] = params.email
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
+
+/*
+ * Start of executing the pipeline
+ */
+ 
+println "Execution started at : $workflow.start"
 
 
 def create_workflow_summary(summary) {
@@ -272,12 +289,114 @@ process output_documentation {
 }
 
 /*
- * Creating index
+ * Create STAR index and directory
  */
  
- /*
-  *
+ if(params.createindex){
+  println "calling creating index subroutine"
+  process createSTARindex
+      tag STARidx
+      //Error warning is missing yet
       
+      println "creating directory"
+      
+      /*
+       * Channels have not been created yet
+       */
+       
+      input:
+      file fasta from fasta  
+      file gtf from gtf_forSTARIndex
+      
+      output:
+      file "star" into star_index
+      
+      script:
+      
+      """
+      echo 'creating directory'
+      mkdir star
+      echo 'creating Star index'
+      STAR\\
+          --runmode genomeGenerate \\
+          --runThread 4 \\ /*${task.cpus}
+          --genomeDir star/ \\
+          --genomeFastaFiles $fasta \\
+          --sjdbGTFfile $gtf \\
+          --sjdbGTFtagExonParantTranscript Parent \\
+          --sjdbOverhang 100 \\
+          
+     """
+  /*
+   * First Pass STAR Mapping Routine
+   */
+    
+   if(params.runall){
+   
+  process star1stPass{
+    //Error warining are missing
+  
+    //Channels are missing
+    
+    input:
+    file reads from readFiles
+    
+    
+    output:
+    file "*Log.final.out" into 
+    file "*SJ.out.tab"
+    file "*Log.out" into
+    file "*Log.progress.out" into
+    
+    
+    script:
+    
+    """
+    STAR   --genomeDir $starindex \
+           --readFilesIn $reads \
+           --runThreadN 4 \
+           --outFilterMultimapScoreRange 1 \
+           --outFilterMultimapNmax 20 \
+           --outFilterMismatchNmax 10  \
+           --alignIntronMax 500000  \
+           --alignMatesGapMax 1000000  \
+           --sjdbScore 2  \
+           --alignSJDBoverhangMin 1  \
+           --genomeLoad NoSharedMemory \
+           --readFilesCommand cat\
+           --outFilterMatchNminOverLread 0.33 \
+           --outFilterScoreMinOverLread 0.33 \
+           --sjdbOverhang 100 \
+           --outSAMstrandField intronMotif \
+           --outSAMtype None \
+           --outSAMmode None \
+        // --outFileNamePrefix $outputdir
+	echo 'calling 1.pass Star Mapping subroutine'
+
+//run_external_cmd(star1stpass_cmd)
+  
+  
+  
+ 
+ /*
+  * Convert path
+  */   
+
+
+
+/*
+ * End of pipeline execution
+ */
+
+workflow.onComplete{
+println "All done in : $workflow.duration"
+println "Execution completed at: $workflow.complete"
+}
+
+
+
+
+
 
 /*
  * Completion e-mail notification
